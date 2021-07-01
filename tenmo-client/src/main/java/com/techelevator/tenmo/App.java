@@ -1,10 +1,17 @@
 package com.techelevator.tenmo;
 
 import com.techelevator.tenmo.model.AuthenticatedUser;
+import com.techelevator.tenmo.model.Transfer;
+import com.techelevator.tenmo.model.User;
 import com.techelevator.tenmo.model.UserCredentials;
+import com.techelevator.tenmo.services.AccountService;
+import com.techelevator.tenmo.services.AccountServiceException;
 import com.techelevator.tenmo.services.AuthenticationService;
 import com.techelevator.tenmo.services.AuthenticationServiceException;
 import com.techelevator.view.ConsoleService;
+
+import java.math.BigDecimal;
+import java.util.Scanner;
 
 public class App {
 
@@ -25,6 +32,7 @@ private static final String API_BASE_URL = "http://localhost:8080/";
     private AuthenticatedUser currentUser;
     private ConsoleService console;
     private AuthenticationService authenticationService;
+    private AccountService accountService = new AccountService(API_BASE_URL);
 
     public static void main(String[] args) {
     	App app = new App(new ConsoleService(System.in, System.out), new AuthenticationService(API_BASE_URL));
@@ -68,28 +76,134 @@ private static final String API_BASE_URL = "http://localhost:8080/";
 	}
 
 	private void viewCurrentBalance() {
-		// TODO Auto-generated method stub
-		
+		BigDecimal balance = accountService.getBalance(currentUser);
+		System.out.println("Your current balance is: $" + balance);
 	}
 
 	private void viewTransferHistory() {
-		// TODO Auto-generated method stub
-		
+		System.out.println("Press 1 to view of all your transfers or press 2 to view a specific transfer. ");
+		Scanner newScanner = new Scanner(System.in);
+		String userInput = newScanner.nextLine();
+		if(userInput.equals("1")) {
+			Transfer[] transfers = accountService.listTransfers(currentUser.getToken());
+			for (Transfer theTransfers : transfers) {
+				System.out.println(theTransfers.toString());
+			}
+		}else {
+			System.out.println("Enter the ID of the transfer you would like to see. ");
+			Scanner newScanner2 = new Scanner(System.in);
+			String userInput2 = newScanner2.nextLine();
+			long Id = Long.parseLong(userInput2);
+			Transfer[] transfer = accountService.getTransferById(currentUser);
+			System.out.println(transfer.toString());
+		}
+
 	}
 
 	private void viewPendingRequests() {
 		// TODO Auto-generated method stub
-		
+
+	}
+
+	private User[] displayUserList() throws AccountServiceException {
+		User[] users = null;
+			users = accountService.getAllUsers(currentUser);
+
+			System.out.println("-------------------------------");
+			System.out.printf("%-12s%-12s\n","ID #", "USERNAME");
+			System.out.println("-------------------------------");
+
+			for (User user : users) {
+				if (user.getId() != (long)currentUser.getUser().getId()) {
+					System.out.printf("%-12s%-12s\n", user.getId(), user.getUsername());
+				}
+			}
+			return users;
+
 	}
 
 	private void sendBucks() {
-		// TODO Auto-generated method stub
-		
+		try {
+			User[] users = displayUserList();
+
+			Scanner in = new Scanner(System.in);
+			System.out.print("\nEnter id of the user you are sending to: ");
+			long input = 0;
+			try {
+				input = Long.parseLong(in.nextLine());
+			} catch (NumberFormatException e) {
+				System.out.println("Please enter a user ID number.");
+			}
+
+			boolean userFound = false;
+
+			for (int i = 0; i < users.length; i++) {
+				if (input == users[i].getId()) {
+					userFound = true;
+				}
+			}
+
+			if (userFound == false)  {
+				System.out.print("\nInvalid user selected. Please enter a user ID from the list: ");
+				input = Long.parseLong(in.nextLine());
+			}
+
+			System.out.print("\nEnter amount : ");
+			BigDecimal response;
+			try {
+				response = new BigDecimal(in.nextLine());
+			} catch (NumberFormatException e) {
+				System.out.println("Please enter a number.");
+				response = new BigDecimal(in.nextLine());
+			}
+
+			BigDecimal balance = accountService.getBalance(currentUser);
+			if (balance.compareTo(response) == -1) {
+				System.out.print("\nYou do not have enough TE bucks to send this request. Please enter a smaller amount: ");
+				response = new BigDecimal(in.nextLine());
+			}
+
+			sendTransfer(currentUser, input, response);
+
+		} catch (AccountServiceException e) {
+			System.out.println(e.getMessage());
+		}
 	}
 
-	private void requestBucks() {
-		// TODO Auto-generated method stub
-		
+	private void requestBucks() throws AccountServiceException {
+		User[] users = displayUserList();
+
+		Scanner in = new Scanner(System.in);
+		System.out.print("\nEnter id of the user you are requesting from: ");
+		long input = Long.parseLong(in.nextLine());
+
+		boolean userFound = false;
+
+		for (int i = 0; i < users.length; i++) {
+			if (input == users[i].getId()) {
+
+				userFound = true;
+			}
+		}
+
+		if (userFound == false)  {
+
+			System.out.print("\nInvalid user selected. Please enter a user from the list: ");
+			input = Long.parseLong(in.nextLine());
+
+		}
+
+		System.out.print("\nEnter amount : ");
+		BigDecimal response;
+		try {
+			response = new BigDecimal(in.nextLine());
+		} catch (NumberFormatException e) {
+			System.out.print("Please enter a number: ");
+			response = new BigDecimal(in.nextLine());
+		}
+
+		makeRequest(currentUser, input, response);
+
 	}
 	
 	private void exitProgram() {
