@@ -7,8 +7,8 @@ public class Transfer {
     private int transferId;
     private String transferType;
     private String transferStatus;
-    private User userFrom;
-    private User userTo;
+    private String userFrom;
+    private String userTo;
     private BigDecimal amount;
 
     public static final String TRANSFER_TYPE_REQUEST = "Request";
@@ -17,13 +17,17 @@ public class Transfer {
     public static final String TRANSFER_TYPE_APPROVED = "Approved";
     public static final String TRANSFER_TYPE_REJECTED = "Rejected";
 
-    public Transfer(int transferId, String transferType, String transferStatus, User userFrom,User userTo, BigDecimal amount) {
+    public Transfer(int transferId, String transferType, String transferStatus, String userFrom, String userTo, BigDecimal amount) {
         this.transferId = transferId;
         this.transferType = transferType;
         this.transferStatus = transferStatus;
         this.userFrom = userFrom;
         this.userTo = userTo;
         this.amount = amount;
+    }
+
+    public Transfer() {
+
     }
 
     public int getTransferId() {
@@ -50,19 +54,19 @@ public class Transfer {
         this.transferStatus = transferStatus;
     }
 
-    public User getUserFrom() {
+    public String getUserFrom() {
         return userFrom;
     }
 
-    public void setUserFrom(User userFrom) {
+    public void setUserFrom(String userFrom) {
         this.userFrom = userFrom;
     }
 
-    public User getUserTo() {
+    public String getUserTo() {
         return userTo;
     }
 
-    public void setUserTo(User userTo) {
+    public void setUserTo(String userTo) {
         this.userTo = userTo;
     }
 
@@ -94,23 +98,7 @@ public class Transfer {
         return TRANSFER_TYPE_SEND.equals(this.transferType);
     }
 
-    public void approve() throws InvalidTransferStatusUpdateException {
-        if(isPending()) {
-            //only pending transfers can be approved
-            transferStatus = TRANSFER_TYPE_APPROVED;
-        }else {
-            throw new InvalidTransferStatusUpdateException(transferStatus, TRANSFER_TYPE_APPROVED);
-        }
+
 
     }
 
-    public void reject() {
-        if (isPending()) {
-            //only pending transfers can be rejected
-            transferStatus = TRANSFER_TYPE_REJECTED;
-        } else {
-            throw new InvalidTransferStatusUpdateException(transferStatus, TRANSFER_TYPE_REJECTED);
-        }
-    }
-
-}
