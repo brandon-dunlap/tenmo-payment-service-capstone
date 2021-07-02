@@ -66,7 +66,7 @@ public class AccountService {
         }
     }
 
-    public Transfer[] getTransferHistoryClient(AuthenticatedUser user) {
+    public Transfer[] getTransferHistory(AuthenticatedUser user) {
         AUTH_TOKEN = user.getToken();
         Transfer[] transfers = null;
         try {
@@ -76,6 +76,15 @@ public class AccountService {
             System.out.println(ex.getRawStatusCode() + " : " + ex.getResponseBodyAsString());
         }
         return transfers;
+    }
+
+    public Transfer[] listTransfers (String authToken) {
+        Transfer[] transfers;
+
+        transfers = restTemplate.exchange(BASE_URL + "/transfer/list", HttpMethod.GET, makeAuthEntity(), Transfer[].class).getBody();
+
+        return transfers;
+
     }
 
     public Transfer[] getTransferById (AuthenticatedUser user) {
