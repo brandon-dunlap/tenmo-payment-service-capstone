@@ -72,15 +72,13 @@ public class UserController {
     @ResponseStatus(HttpStatus.CREATED)
     @RequestMapping(path = "/users/{id}/transfers/send", method = RequestMethod.POST)
     public int sendTenmoBucks(@PathVariable long id, @RequestBody SendTransfer transfer) {
-        int results = dao.sendTransferToUser(id, transfer);
-        return results;
+        return dao.sendTransferToUser(id, transfer);
     }
 
     @ResponseStatus(HttpStatus.CREATED)
     @RequestMapping(path = "/users/{id}/transfers/request", method = RequestMethod.POST)
     public int requestTenmoBucks(@PathVariable long id, @RequestBody SendTransfer transfer) {
-        int results = dao.requestTransferFromUser(id, transfer);
-        return results;
+        return dao.requestTransferFromUser(id, transfer);
     }
 
 
