@@ -26,6 +26,10 @@ public class Transfer {
         this.amount = amount;
     }
 
+    public Transfer() {
+
+    }
+
     public int getTransferId() {
         return transferId;
     }
@@ -94,23 +98,6 @@ public class Transfer {
         return TRANSFER_TYPE_SEND.equals(this.transferType);
     }
 
-    public void approve() throws InvalidTransferStatusUpdateException {
-        if(isPending()) {
-            //only pending transfers can be approved
-            transferStatus = TRANSFER_TYPE_APPROVED;
-        }else {
-            throw new InvalidTransferStatusUpdateException(transferStatus, TRANSFER_TYPE_APPROVED);
-        }
 
-    }
-
-    public void reject() {
-        if (isPending()) {
-            //only pending transfers can be rejected
-            transferStatus = TRANSFER_TYPE_REJECTED;
-        } else {
-            throw new InvalidTransferStatusUpdateException(transferStatus, TRANSFER_TYPE_REJECTED);
-        }
-    }
 
 }

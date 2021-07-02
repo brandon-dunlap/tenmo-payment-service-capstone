@@ -82,7 +82,7 @@ public class AccountService {
         AUTH_TOKEN = user.getToken();
         Transfer[] transfers =  null;
         try {
-            transfers = restTemplate.exchange(BASE_URL + "/transfer/" + User.getId(), HttpMethod.GET, makeAuthEntity(), Transfer.class).getBody();
+            transfers = restTemplate.exchange(BASE_URL + "/transfer/{id}", HttpMethod.GET, makeAuthEntity(), Transfer[].class).getBody();
         } catch (RestClientResponseException ex) {
             System.out.println(ex.getRawStatusCode() + " : " + ex.getResponseBodyAsString());
         }

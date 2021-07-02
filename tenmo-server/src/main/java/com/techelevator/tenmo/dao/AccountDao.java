@@ -1,10 +1,11 @@
 package com.techelevator.tenmo.dao;
 
 import com.techelevator.tenmo.model.Account;
+import com.techelevator.tenmo.model.SendTransfer;
 
 public interface AccountDao {
 
-    Account getAccountByUserId(Long userId);
+    int updateBalanceAfterTransfer(long userId, SendTransfer transfer);
 
-    void updateBalance(Account account);
+    int updateBalanceReceiveTransfer(long userId, SendTransfer transfer);
 }

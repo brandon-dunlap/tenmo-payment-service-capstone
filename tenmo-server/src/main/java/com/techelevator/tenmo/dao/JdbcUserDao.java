@@ -1,5 +1,7 @@
 package com.techelevator.tenmo.dao;
 
+import com.techelevator.tenmo.model.SendTransfer;
+import com.techelevator.tenmo.model.Transfer;
 import com.techelevator.tenmo.model.User;
 import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -77,6 +79,41 @@ public class JdbcUserDao implements UserDao {
         }
 
         return true;
+    }
+
+    @Override
+    public BigDecimal getBalanceByUserid(long id) {
+        return null;
+    }
+
+    @Override
+    public List<Transfer> getTransfersByUserId(long id) {
+        return null;
+    }
+
+    @Override
+    public Transfer getTransferDetailsWithTransferId(long transferId) {
+        return null;
+    }
+
+    @Override
+    public void updateUserBalanceAfterSentTransfer(long id, SendTransfer transfer) {
+
+    }
+
+    @Override
+    public void updateReceiversBalanceAfterTransfer(long id, SendTransfer transfer) {
+
+    }
+
+    @Override
+    public int sendTransferToUser(long id, SendTransfer transfer) {
+        return 0;
+    }
+
+    @Override
+    public int requestTransferFromUser(long id, SendTransfer transfer) {
+        return 0;
     }
 
     private User mapRowToUser(SqlRowSet rs) {

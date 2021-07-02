@@ -1,5 +1,6 @@
 package com.techelevator.tenmo.dao;
 
+import com.techelevator.tenmo.model.SendTransfer;
 import com.techelevator.tenmo.model.Transfer;
 
 import java.util.List;
@@ -7,15 +8,19 @@ import java.util.List;
 
 public interface TransferDao {
 
-    Transfer getTransferById(int transferId);
+    Transfer getTransferById(long transferId);
 
     Transfer addTransfer(Transfer newTransfer);
 
-    List<Transfer> getTransfersForUser(int userId);
+    List<Transfer> sentTransfers(long userFrom);
 
-    List<Transfer> findAll();
+    List<Transfer> receivedTransfers(long userTo);
 
-    List<Transfer> getPendingTransferForUser(int currentUserId);
+    List<Transfer> transfersById(long id);
 
-    void updateStatus(Transfer transfer);
+    public int transferToUser(long userFrom, SendTransfer transfer);
+
+    public int requestToUser(long userFrom, SendTransfer transfer);
+
+
 }
