@@ -1,10 +1,17 @@
 package com.techelevator.tenmo;
 
 import com.techelevator.tenmo.model.AuthenticatedUser;
+import com.techelevator.tenmo.model.Transfer;
+import com.techelevator.tenmo.model.User;
 import com.techelevator.tenmo.model.UserCredentials;
+import com.techelevator.tenmo.services.AccountService;
+import com.techelevator.tenmo.services.AccountServiceException;
 import com.techelevator.tenmo.services.AuthenticationService;
 import com.techelevator.tenmo.services.AuthenticationServiceException;
 import com.techelevator.view.ConsoleService;
+
+import java.math.BigDecimal;
+import java.util.Scanner;
 
 public class App {
 
@@ -20,20 +27,29 @@ private static final String API_BASE_URL = "http://localhost:8080/";
 	private static final String MAIN_MENU_OPTION_REQUEST_BUCKS = "Request TE bucks";
 	private static final String MAIN_MENU_OPTION_VIEW_PENDING_REQUESTS = "View your pending requests";
 	private static final String MAIN_MENU_OPTION_LOGIN = "Login as different user";
-	private static final String[] MAIN_MENU_OPTIONS = { MAIN_MENU_OPTION_VIEW_BALANCE, MAIN_MENU_OPTION_SEND_BUCKS, MAIN_MENU_OPTION_VIEW_PAST_TRANSFERS, MAIN_MENU_OPTION_REQUEST_BUCKS, MAIN_MENU_OPTION_VIEW_PENDING_REQUESTS, MAIN_MENU_OPTION_LOGIN, MENU_OPTION_EXIT };
+	private static final String[] MAIN_MENU_OPTIONS = { MAIN_MENU_OPTION_VIEW_BALANCE, MAIN_MENU_OPTION_SEND_BUCKS,
+			MAIN_MENU_OPTION_VIEW_PAST_TRANSFERS, MAIN_MENU_OPTION_REQUEST_BUCKS, MAIN_MENU_OPTION_VIEW_PENDING_REQUESTS,
+			MAIN_MENU_OPTION_LOGIN, MENU_OPTION_EXIT };
 	
     private AuthenticatedUser currentUser;
     private ConsoleService console;
     private AuthenticationService authenticationService;
+    private AccountService accountService;
+
+	private static final String TRANSFER_TYPE_SEND = "Send";
+	private static final String TRANSFER_TYPE_REQUEST = "Request";
+	private static final String TRANSFER_STATUS_APPROVED = "Approved";
+
 
     public static void main(String[] args) {
-    	App app = new App(new ConsoleService(System.in, System.out), new AuthenticationService(API_BASE_URL));
+    	App app = new App(new ConsoleService(System.in, System.out), new AuthenticationService(API_BASE_URL), new AccountService(API_BASE_URL));
     	app.run();
     }
 
-    public App(ConsoleService console, AuthenticationService authenticationService) {
+    public App(ConsoleService console, AuthenticationService authenticationService, AccountService accountService) {
 		this.console = console;
 		this.authenticationService = authenticationService;
+		this.accountService = accountService;
 	}
 
 	public void run() {
@@ -68,28 +84,113 @@ private static final String API_BASE_URL = "http://localhost:8080/";
 	}
 
 	private void viewCurrentBalance() {
-		// TODO Auto-generated method stub
-		
+		BigDecimal balance = accountService.getBalance(currentUser);
+		System.out.println("Your current balance is: $" + balance);
 	}
 
 	private void viewTransferHistory() {
-		// TODO Auto-generated method stub
-		
+		System.out.println("Press 1 to view of all your transfers or press 2 to view a specific transfer. ");
+		Scanner newScanner = new Scanner(System.in);
+		String userInput = newScanner.nextLine();
+		if(userInput.equals("1")) {
+			Transfer[] transfers = accountService.listTransfers(currentUser.getToken());
+			for (Transfer theTransfers : transfers) {
+				System.out.println(theTransfers.toString());
+			}
+		}else {
+			System.out.println("Enter the ID of the transfer you would like to see. ");
+			Scanner newScanner2 = new Scanner(System.in);
+			String userInput2 = newScanner2.nextLine();
+			long Id = Long.parseLong(userInput2);
+			Transfer[] transfer = accountService.getTransferById(currentUser);
+			System.out.println(transfer.toString());
+		}
+
 	}
 
 	private void viewPendingRequests() {
 		// TODO Auto-generated method stub
-		
+
+	}
+
+	private User[] displayUserList() throws AccountServiceException {
+		User[] users = null;
+			users = accountService.getAllUsers(currentUser);
+
+			System.out.println("-------------------------------");
+			System.out.printf("%-12s%-12s\n","ID #", "USERNAME");
+			System.out.println("-------------------------------");
+
+			for (User user : users) {
+				if (user.getId() != (long)currentUser.getUser().getId()) {
+					System.out.printf("%-12s%-12s\n", user.getId(), user.getUsername());
+				}
+			}
+			return users;
+
 	}
 
 	private void sendBucks() {
-		// TODO Auto-generated method stub
-		
+		// Makes menu
+		String userMenu = String.format("\nUsers\n%-10s%-30s", "ID", "Name");
+		User[] users = accountService.getAllUsers(currentUser);
+		for (User user : users) {
+			userMenu = String.format(userMenu + "\n%-10d%-30s", user.getId(), user.getUsername());
+		}
+		userMenu += "\n\nEnter ID of user you are sending to (0 to cancel)";
+
+		// Gets user choice
+		int sendToChoice = 0;
+		try {
+			sendToChoice = console.getUserInputInteger(userMenu);
+		} catch (NumberFormatException ex) {
+			System.out.println("Please choose a valid userID number.");
+		}
+		if (sendToChoice == 0)
+			return;
+		BigDecimal amount = BigDecimal.ZERO;
+		try {
+			amount = new BigDecimal(console.getUserInput("Enter amount of TEBucks"));
+		} catch (NumberFormatException ex) {
+			System.out.println("Invalid money amount.");
+		}
+
+		// If the amount being sent is positive
+		// POST transfer object to server
+		if (amount.compareTo(BigDecimal.ZERO) == 1) {
+			Transfer sendTransfer = new Transfer(TRANSFER_TYPE_SEND, TRANSFER_STATUS_APPROVED,
+					currentUser.getUser().getId(), sendToChoice, amount);
+			accountService.sendTransfer(currentUser, sendTransfer);
+			viewCurrentBalance();
+		}
 	}
 
 	private void requestBucks() {
-		// TODO Auto-generated method stub
-		
+		// Makes menu
+		String userMenu = String.format("\nUsers\n%-10s%-30s", "ID", "Name");
+		User[] users = accountService.getAllUsers(currentUser);
+		for (User user : users) {
+			userMenu = String.format(userMenu + "\n%-10d%-30s", user.getId(), user.getUsername());
+		}
+		userMenu += "\n\nEnter ID of user you are requesting from (0 to cancel)";
+		// Gets user choice
+		int sendToChoice = console.getUserInputInteger(userMenu);
+		if (sendToChoice == 0)
+			return;
+		BigDecimal amount = BigDecimal.ZERO;
+		try {
+			amount = new BigDecimal(console.getUserInput("Enter amount of TEBucks"));
+		} catch (NumberFormatException ex) {
+			System.out.println("Invalid money amount");
+		}
+		// If the amount being sent is positive
+		// POST transfer object to server
+		if (amount.compareTo(BigDecimal.ZERO) == 1) {
+			Transfer sendTransfer = new Transfer(TRANSFER_TYPE_REQUEST, TRANSFER_STATUS_APPROVED,
+					currentUser.getUser().getId(), sendToChoice, amount);
+			accountService.requestTransfer(currentUser, sendTransfer);
+			viewCurrentBalance();
+		}
 	}
 	
 	private void exitProgram() {

@@ -66,7 +66,7 @@ public class AccountService {
         }
     }
 
-    public Transfer[] getTransferHistoryClient(AuthenticatedUser user) {
+    public Transfer[] getTransferHistory(AuthenticatedUser user) {
         AUTH_TOKEN = user.getToken();
         Transfer[] transfers = null;
         try {
@@ -78,11 +78,20 @@ public class AccountService {
         return transfers;
     }
 
+    public Transfer[] listTransfers (String authToken) {
+        Transfer[] transfers;
+
+        transfers = restTemplate.exchange(BASE_URL + "/transfer/list", HttpMethod.GET, makeAuthEntity(), Transfer[].class).getBody();
+
+        return transfers;
+
+    }
+
     public Transfer[] getTransferById (AuthenticatedUser user) {
         AUTH_TOKEN = user.getToken();
         Transfer[] transfers =  null;
         try {
-            transfers = restTemplate.exchange(BASE_URL + "/transfer/" + User.getId(), HttpMethod.GET, makeAuthEntity(), Transfer.class).getBody();
+            transfers = restTemplate.exchange(BASE_URL + "/transfer/{id}", HttpMethod.GET, makeAuthEntity(), Transfer[].class).getBody();
         } catch (RestClientResponseException ex) {
             System.out.println(ex.getRawStatusCode() + " : " + ex.getResponseBodyAsString());
         }
