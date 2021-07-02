@@ -27,21 +27,29 @@ private static final String API_BASE_URL = "http://localhost:8080/";
 	private static final String MAIN_MENU_OPTION_REQUEST_BUCKS = "Request TE bucks";
 	private static final String MAIN_MENU_OPTION_VIEW_PENDING_REQUESTS = "View your pending requests";
 	private static final String MAIN_MENU_OPTION_LOGIN = "Login as different user";
-	private static final String[] MAIN_MENU_OPTIONS = { MAIN_MENU_OPTION_VIEW_BALANCE, MAIN_MENU_OPTION_SEND_BUCKS, MAIN_MENU_OPTION_VIEW_PAST_TRANSFERS, MAIN_MENU_OPTION_REQUEST_BUCKS, MAIN_MENU_OPTION_VIEW_PENDING_REQUESTS, MAIN_MENU_OPTION_LOGIN, MENU_OPTION_EXIT };
+	private static final String[] MAIN_MENU_OPTIONS = { MAIN_MENU_OPTION_VIEW_BALANCE, MAIN_MENU_OPTION_SEND_BUCKS,
+			MAIN_MENU_OPTION_VIEW_PAST_TRANSFERS, MAIN_MENU_OPTION_REQUEST_BUCKS, MAIN_MENU_OPTION_VIEW_PENDING_REQUESTS,
+			MAIN_MENU_OPTION_LOGIN, MENU_OPTION_EXIT };
 	
     private AuthenticatedUser currentUser;
     private ConsoleService console;
     private AuthenticationService authenticationService;
-    private AccountService accountService = new AccountService(API_BASE_URL);
+    private AccountService accountService;
+
+	private static final String TRANSFER_TYPE_SEND = "Send";
+	private static final String TRANSFER_TYPE_REQUEST = "Request";
+	private static final String TRANSFER_STATUS_APPROVED = "Approved";
+
 
     public static void main(String[] args) {
-    	App app = new App(new ConsoleService(System.in, System.out), new AuthenticationService(API_BASE_URL));
+    	App app = new App(new ConsoleService(System.in, System.out), new AuthenticationService(API_BASE_URL), new AccountService(API_BASE_URL));
     	app.run();
     }
 
-    public App(ConsoleService console, AuthenticationService authenticationService) {
+    public App(ConsoleService console, AuthenticationService authenticationService, AccountService accountService) {
 		this.console = console;
 		this.authenticationService = authenticationService;
+		this.accountService = accountService;
 	}
 
 	public void run() {
@@ -123,87 +131,66 @@ private static final String API_BASE_URL = "http://localhost:8080/";
 	}
 
 	private void sendBucks() {
+		// Makes menu
+		String userMenu = String.format("\nUsers\n%-10s%-30s", "ID", "Name");
+		User[] users = accountService.getAllUsers(currentUser);
+		for (User user : users) {
+			userMenu = String.format(userMenu + "\n%-10d%-30s", user.getId(), user.getUsername());
+		}
+		userMenu += "\n\nEnter ID of user you are sending to (0 to cancel)";
+
+		// Gets user choice
+		int sendToChoice = 0;
 		try {
-			User[] users = displayUserList();
+			sendToChoice = console.getUserInputInteger(userMenu);
+		} catch (NumberFormatException ex) {
+			System.out.println("Please choose a valid userID number.");
+		}
+		if (sendToChoice == 0)
+			return;
+		BigDecimal amount = BigDecimal.ZERO;
+		try {
+			amount = new BigDecimal(console.getUserInput("Enter amount of TEBucks"));
+		} catch (NumberFormatException ex) {
+			System.out.println("Invalid money amount.");
+		}
 
-			Scanner in = new Scanner(System.in);
-			System.out.print("\nEnter id of the user you are sending to: ");
-			long input = 0;
-			try {
-				input = Long.parseLong(in.nextLine());
-			} catch (NumberFormatException e) {
-				System.out.println("Please enter a user ID number.");
-			}
-
-			boolean userFound = false;
-
-			for (int i = 0; i < users.length; i++) {
-				if (input == users[i].getId()) {
-					userFound = true;
-				}
-			}
-
-			if (userFound == false)  {
-				System.out.print("\nInvalid user selected. Please enter a user ID from the list: ");
-				input = Long.parseLong(in.nextLine());
-			}
-
-			System.out.print("\nEnter amount : ");
-			BigDecimal response;
-			try {
-				response = new BigDecimal(in.nextLine());
-			} catch (NumberFormatException e) {
-				System.out.println("Please enter a number.");
-				response = new BigDecimal(in.nextLine());
-			}
-
-			BigDecimal balance = accountService.getBalance(currentUser);
-			if (balance.compareTo(response) == -1) {
-				System.out.print("\nYou do not have enough TE bucks to send this request. Please enter a smaller amount: ");
-				response = new BigDecimal(in.nextLine());
-			}
-
-			sendTransfer(currentUser, input, response);
-
-		} catch (AccountServiceException e) {
-			System.out.println(e.getMessage());
+		// If the amount being sent is positive
+		// POST transfer object to server
+		if (amount.compareTo(BigDecimal.ZERO) == 1) {
+			Transfer sendTransfer = new Transfer(TRANSFER_TYPE_SEND, TRANSFER_STATUS_APPROVED,
+					currentUser.getUser().getId(), sendToChoice, amount);
+			accountService.sendTransfer(currentUser, sendTransfer);
+			viewCurrentBalance();
 		}
 	}
 
-	private void requestBucks() throws AccountServiceException {
-		User[] users = displayUserList();
-
-		Scanner in = new Scanner(System.in);
-		System.out.print("\nEnter id of the user you are requesting from: ");
-		long input = Long.parseLong(in.nextLine());
-
-		boolean userFound = false;
-
-		for (int i = 0; i < users.length; i++) {
-			if (input == users[i].getId()) {
-
-				userFound = true;
-			}
+	private void requestBucks() {
+		// Makes menu
+		String userMenu = String.format("\nUsers\n%-10s%-30s", "ID", "Name");
+		User[] users = accountService.getAllUsers(currentUser);
+		for (User user : users) {
+			userMenu = String.format(userMenu + "\n%-10d%-30s", user.getId(), user.getUsername());
 		}
-
-		if (userFound == false)  {
-
-			System.out.print("\nInvalid user selected. Please enter a user from the list: ");
-			input = Long.parseLong(in.nextLine());
-
-		}
-
-		System.out.print("\nEnter amount : ");
-		BigDecimal response;
+		userMenu += "\n\nEnter ID of user you are requesting from (0 to cancel)";
+		// Gets user choice
+		int sendToChoice = console.getUserInputInteger(userMenu);
+		if (sendToChoice == 0)
+			return;
+		BigDecimal amount = BigDecimal.ZERO;
 		try {
-			response = new BigDecimal(in.nextLine());
-		} catch (NumberFormatException e) {
-			System.out.print("Please enter a number: ");
-			response = new BigDecimal(in.nextLine());
+			amount = new BigDecimal(console.getUserInput("Enter amount of TEBucks"));
+		} catch (NumberFormatException ex) {
+			System.out.println("Invalid money amount");
 		}
-
-		makeRequest(currentUser, input, response);
-
+		// If the amount being sent is positive
+		// POST transfer object to server
+		if (amount.compareTo(BigDecimal.ZERO) == 1) {
+			Transfer sendTransfer = new Transfer(TRANSFER_TYPE_REQUEST, TRANSFER_STATUS_APPROVED,
+					currentUser.getUser().getId(), sendToChoice, amount);
+			accountService.requestTransfer(currentUser, sendTransfer);
+			viewCurrentBalance();
+		}
 	}
 	
 	private void exitProgram() {
