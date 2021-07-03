@@ -5,10 +5,10 @@ import java.math.BigDecimal;
 public class Transfer {
 
     private int transferId;
-    private String transferType;
-    private String transferStatus;
-    private User userFrom;
-    private User userTo;
+    private int transferType;
+    private int transferStatus;
+    private int accountFrom;
+    private int accountTo;
     private BigDecimal amount;
 
     public static final String TRANSFER_TYPE_REQUEST = "Request";
@@ -17,13 +17,17 @@ public class Transfer {
     public static final String TRANSFER_TYPE_APPROVED = "Approved";
     public static final String TRANSFER_TYPE_REJECTED = "Rejected";
 
-    public Transfer(int transferId, String transferType, String transferStatus, User userFrom,User userTo, BigDecimal amount) {
+    public Transfer(int transferId, int transferType, int transferStatus, int accountFrom, int accountTo, BigDecimal amount) {
         this.transferId = transferId;
         this.transferType = transferType;
         this.transferStatus = transferStatus;
-        this.userFrom = userFrom;
-        this.userTo = userTo;
+        this.accountFrom = accountFrom;
+        this.accountTo = accountTo;
         this.amount = amount;
+    }
+
+    public Transfer() {
+
     }
 
     public int getTransferId() {
@@ -34,36 +38,36 @@ public class Transfer {
         this.transferId = transferId;
     }
 
-    public String getTransferType() {
+    public int getTransferType() {
         return transferType;
     }
 
-    public void setTransferType(String transferType) {
+    public void setTransferType(int transferType) {
         this.transferType = transferType;
     }
 
-    public String getTransferStatus() {
+    public int getTransferStatus() {
         return transferStatus;
     }
 
-    public void setTransferStatus(String transferStatus) {
+    public void setTransferStatus(int transferStatus) {
         this.transferStatus = transferStatus;
     }
 
-    public User getUserFrom() {
-        return userFrom;
+    public int getAccountFrom() {
+        return accountFrom;
     }
 
-    public void setUserFrom(User userFrom) {
-        this.userFrom = userFrom;
+    public void setAccountFrom(int accountFrom) {
+        this.accountFrom = accountFrom;
     }
 
-    public User getUserTo() {
-        return userTo;
+    public int getAccountTo() {
+        return accountTo;
     }
 
-    public void setUserTo(User userTo) {
-        this.userTo = userTo;
+    public void setAccountTo(int accountTo) {
+        this.accountTo = accountTo;
     }
 
     public BigDecimal getAmount() {
@@ -94,23 +98,7 @@ public class Transfer {
         return TRANSFER_TYPE_SEND.equals(this.transferType);
     }
 
-    public void approve() throws InvalidTransferStatusUpdateException {
-        if(isPending()) {
-            //only pending transfers can be approved
-            transferStatus = TRANSFER_TYPE_APPROVED;
-        }else {
-            throw new InvalidTransferStatusUpdateException(transferStatus, TRANSFER_TYPE_APPROVED);
-        }
+
 
     }
 
-    public void reject() {
-        if (isPending()) {
-            //only pending transfers can be rejected
-            transferStatus = TRANSFER_TYPE_REJECTED;
-        } else {
-            throw new InvalidTransferStatusUpdateException(transferStatus, TRANSFER_TYPE_REJECTED);
-        }
-    }
-
-}
