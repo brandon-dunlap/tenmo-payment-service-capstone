@@ -1,6 +1,5 @@
 package com.techelevator.tenmo.dao;
 
-import com.techelevator.tenmo.model.SendTransfer;
 import com.techelevator.tenmo.model.Transfer;
 import com.techelevator.tenmo.model.User;
 
@@ -24,11 +23,7 @@ public interface UserDao {
 
     Transfer getTransferDetailsWithTransferId(long transferId);
 
-    void updateUserBalanceAfterSentTransfer(long id, SendTransfer transfer);
 
-    void updateReceiversBalanceAfterTransfer(long id, SendTransfer transfer);
 
-    int sendTransferToUser(long id, SendTransfer transfer);
 
-    int requestTransferFromUser(long id, SendTransfer transfer);
 }
