@@ -1,5 +1,6 @@
 package com.techelevator.tenmo.dao;
 
+import com.techelevator.tenmo.model.Account;
 import com.techelevator.tenmo.model.Transfer;
 import com.techelevator.tenmo.model.Transfer;
 import com.techelevator.tenmo.model.User;
@@ -83,17 +84,26 @@ public class JdbcUserDao implements UserDao {
 
     @Override
     public BigDecimal getBalanceByUserid(long id) {
-        return null;
+        String sql = "SELECT balance From accounts WHERE user_id = ?";
+        BigDecimal balance =  jdbcTemplate.queryForObject(sql, BigDecimal.class, id);
+        return balance;
     }
 
     @Override
     public List<Transfer> getTransfersByUserId(long id) {
-        return null;
+        String sql = "SELECT * FROM transfers \n" +
+                "WHERE account_from IN (SELECT account_id FROM accounts WHERE user_id = ?)\n" +
+                "OR account_to IN (SELECT account_id FROM accounts WHERE user_id = ?)";
+        List<Transfer> transfers = jdbcTemplate.queryForList(sql, Transfer.class, id, id);
+        return transfers;
+
     }
 
     @Override
     public Transfer getTransferDetailsWithTransferId(long transferId) {
-        return null;
+        String sql = "SELECT transfer_type_desc FROM transfer_types JOIN transfers USING transfer_type_id WHERE transfer_id = ?";
+                Transfer transfer = jdbcTemplate.queryForObject(sql,Transfer.class, transferId);
+        return transfer;
     }
 
 
