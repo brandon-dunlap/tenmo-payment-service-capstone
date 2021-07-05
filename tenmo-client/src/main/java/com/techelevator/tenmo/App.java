@@ -9,6 +9,7 @@ import com.techelevator.tenmo.services.AccountServiceException;
 import com.techelevator.tenmo.services.AuthenticationService;
 import com.techelevator.tenmo.services.AuthenticationServiceException;
 import com.techelevator.view.ConsoleService;
+import org.springframework.web.client.RestClientResponseException;
 
 import java.math.BigDecimal;
 import java.util.Scanner;
@@ -94,16 +95,24 @@ private static final String API_BASE_URL = "http://localhost:8080/";
 		String userInput = newScanner.nextLine();
 		if(userInput.equals("1")) {
 			Transfer[] transfers = accountService.listTransfers(currentUser.getToken());
-			for (Transfer theTransfers : transfers) {
-				System.out.println(theTransfers.toString());
+			if (transfers != null) {
+				for (Transfer theTransfers : transfers) {
+					System.out.println(theTransfers.toString());
+				}
+			} else {
+				System.out.println("There are no transfers to view.");
 			}
 		}else {
 			System.out.println("Enter the ID of the transfer you would like to see. ");
 			Scanner newScanner2 = new Scanner(System.in);
 			String userInput2 = newScanner2.nextLine();
 			long Id = Long.parseLong(userInput2);
-			Transfer[] transfer = accountService.getTransferById(currentUser);
-			System.out.println(transfer.toString());
+			try {
+				Transfer[] transfer = accountService.getTransferById(currentUser);
+				System.out.println(transfer.toString());
+			} catch (Exception e) {
+				System.out.println("There is no transfer available with this ID.");
+			}
 		}
 
 	}
